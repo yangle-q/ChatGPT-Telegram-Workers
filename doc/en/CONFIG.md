@@ -96,7 +96,7 @@ All `xxx_MODELS_LIST` can be a URL or a JSON array string. When it is empty, it 
 | KEY                     | Name                    | Default                     | 
 |-------------------------|-------------------------|-----------------------------|
 | OPENAI_API_KEY          | OpenAI API Key          | `''`(array string)          |
-| OPENAI_CHAT_MODEL       | OpenAI Model            | `gpt-4o-mini`               |
+| OPENAI_CHAT_MODEL       | OpenAI Model            | `gpt-5-mini`                |
 | OPENAI_API_BASE         | OpenAI API BASE         | `https://api.openai.com/v1` |
 | OPENAI_API_EXTRA_PARAMS | OpenAI API Extra Params | `{}`                        |
 | OPENAI_CHAT_MODELS_LIST | List of OpenAI Models   | `''`                        |
@@ -105,11 +105,11 @@ All `xxx_MODELS_LIST` can be a URL or a JSON array string. When it is empty, it 
 
 | KEY                     | Name                    | Default                     |
 |-------------------------|-------------------------|-----------------------------|
-| DALL_E_MODEL            | DALL-E model name.      | `dall-e-3`                  |
+| DALL_E_MODEL            | DALL-E model name.      | `gpt-image-1`               |
 | DALL_E_IMAGE_SIZE       | DALL-E Image size       | `1024x1024`                 |
 | DALL_E_IMAGE_QUALITY    | DALL-E Image quality    | `standard`                  |
 | DALL_E_IMAGE_STYLE      | DALL-E Image style      | `vivid`                     |
-| DALL_E_MODELS_LIST      | List of DALL-E Models   | `''`                        |
+| DALL_E_MODELS_LIST      | List of DALL-E Models   | `["gpt-image-1","dall-e-3"]` |
 
 ### Azure OpenAI
 
@@ -123,8 +123,8 @@ All `xxx_MODELS_LIST` can be a URL or a JSON array string. When it is empty, it 
 | ~~AZURE_COMPLETIONS_API~~ | ~~Azure Completions API~~ | `null`       |
 | ~~AZURE_DALLE_API~~       | ~~Azure DallE API~~       | `null`       |
 | AZURE_RESOURCE_NAME       | Azure Resource Name       | `null`       |
-| AZURE_CHAT_MODEL          | Azure Chat Model          | `null`       |
-| AZURE_IMAGE_MODEL         | Azure Image Model         | `null`       |
+| AZURE_CHAT_MODEL          | Azure Chat Model          | `gpt-5-mini` |
+| AZURE_IMAGE_MODEL         | Azure Image Model         | `dall-e-3`   |
 | AZURE_API_VERSION         | Azure API version number  | `2024-06-01` |
 | AZURE_CHAT_MODELS_LIST    | List of Azure Chat Models | `''`         |
 
@@ -134,8 +134,8 @@ All `xxx_MODELS_LIST` can be a URL or a JSON array string. When it is empty, it 
 |---------------------------|------------------------------|----------------------------------------|
 | CLOUDFLARE_ACCOUNT_ID     | Cloudflare Account ID        | `null`                                 |
 | CLOUDFLARE_TOKEN          | Cloudflare Token             | `null`                                 |
-| WORKERS_CHAT_MODEL        | Text Generation Model        | `@cf/qwen/qwen1.5-7b-chat-awq`         |
-| WORKERS_IMAGE_MODEL       | Text-to-Image Model          | `@cf/black-forest-labs/flux-1-schnell` |
+| WORKERS_CHAT_MODEL        | Text Generation Model        | `@cf/qwen/qwen3-30b-a3b-fp8`           |
+| WORKERS_IMAGE_MODEL       | Text-to-Image Model          | `@cf/black-forest-labs/flux-2-dev`     |
 | WORKERS_CHAT_MODELS_LIST  | List of Workers Chat Models  | `''`                                   |
 | WORKERS_IMAGE_MODELS_LIST | List of Workers Image Models | `''`                                   |
 
@@ -148,7 +148,7 @@ All `xxx_MODELS_LIST` can be a URL or a JSON array string. When it is empty, it 
 | GOOGLE_API_KEY               | Google Gemini API Key                         | `null`                                                     |
 | ~~GOOGLE_COMPLETIONS_API~~   | ~~Google Gemini API~~                         | `https://generativelanguage.googleapis.com/v1beta/models/` |
 | ~~GOOGLE_COMPLETIONS_MODEL~~ | ~~Google Gemini Model~~                       | `gemini-pro`                                               |
-| GOOGLE_CHAT_MODEL            | Google Gemini Model                           | `gemini-pro`                                               |
+| GOOGLE_CHAT_MODEL            | Google Gemini Model                           | `gemini-2.5-flash`                                         |
 | GOOGLE_API_BASE              | Supports Gemini API Base in OpenAI API format | `https://generativelanguage.googleapis.com/v1beta`         |
 | GOOGLE_CHAT_MODELS_LIST      | List of Google Chat Models                    | `''`                                                       |
 
@@ -158,7 +158,7 @@ All `xxx_MODELS_LIST` can be a URL or a JSON array string. When it is empty, it 
 |--------------------------|-----------------------------|-----------------------------|
 | MISTRAL_API_KEY          | Mistral API Key             | `null`                      |
 | MISTRAL_API_BASE         | Mistral API Base            | `https://api.mistral.ai/v1` |
-| MISTRAL_CHAT_MODEL       | Mistral API Model           | `mistral-tiny`              |
+| MISTRAL_CHAT_MODEL       | Mistral API Model           | `mistral-small-latest`      |
 | MISTRAL_CHAT_MODELS_LIST | List of Mistral Chat Models | `''`                        |
 
 ### Cohere
@@ -166,8 +166,8 @@ All `xxx_MODELS_LIST` can be a URL or a JSON array string. When it is empty, it 
 | KEY                     | Name                       | Default                     | 
 |-------------------------|----------------------------|-----------------------------|
 | COHERE_API_KEY          | Cohere API Key             | `null`                      |
-| COHERE_API_BASE         | Cohere API Base            | `https://api.cohere.com/v1` |
-| COHERE_CHAT_MODEL       | Cohere API Model           | `command-r-plus`            |
+| COHERE_API_BASE         | Cohere API Base            | `https://api.cohere.ai/compatibility/v1` |
+| COHERE_CHAT_MODEL       | Cohere API Model           | `command-a-03-2025`         |
 | COHERE_CHAT_MODELS_LIST | List of Cohere Chat Models | `''`                        |
 
 ### Anthropic
@@ -176,7 +176,7 @@ All `xxx_MODELS_LIST` can be a URL or a JSON array string. When it is empty, it 
 |----------------------------|-------------------------------|--------------------------------|
 | ANTHROPIC_API_KEY          | Anthropic API Key             | `null`                         |
 | ANTHROPIC_API_BASE         | Anthropic API Base            | `https://api.anthropic.com/v1` |
-| ANTHROPIC_CHAT_MODEL       | Anthropic API Model           | `null`                         |
+| ANTHROPIC_CHAT_MODEL       | Anthropic API Model           | `claude-sonnet-4-5`            |
 | ANTHROPIC_CHAT_MODELS_LIST | List of Anthropic Chat Models | `''`                           |
 
 ### Groq
@@ -185,7 +185,7 @@ All `xxx_MODELS_LIST` can be a URL or a JSON array string. When it is empty, it 
 |-----------------------|--------------------------|----------------------------------|
 | GROQ_API_KEY          | Groq API Key             | `null`                           |
 | GROQ_API_BASE         | Groq API Base            | `https://api.groq.com/openai/v1` |
-| GROQ_CHAT_MODEL       | Groq API Model           | `groq-chat`                      |
+| GROQ_CHAT_MODEL       | Groq API Model           | `llama-3.3-70b-versatile`       |
 | GROQ_CHAT_MODELS_LIST | List of Groq Chat Models | `''`                             |
 
 ### DeepSeek
@@ -202,8 +202,8 @@ All `xxx_MODELS_LIST` can be a URL or a JSON array string. When it is empty, it 
 | KEY                  | Name                | Default            | 
 |----------------------|---------------------|--------------------|
 | XAI_API_KEY          | XAi API Key         | `null`             |
-| XAI_API_BASE         | XAi API Base        | `https://api.x.ai` |
-| XAI_CHAT_MODEL       | XAi API Model       | `grok-2-latest`    |
+| XAI_API_BASE         | XAi API Base        | `https://api.x.ai/v1` |
+| XAI_CHAT_MODEL       | XAi API Model       | `grok-4-latest`    |
 | XAI_CHAT_MODELS_LIST | XAi Chat Model List | `''`               |
 
 
@@ -308,7 +308,7 @@ When the model list configuration is empty for an AI provider that supports fetc
 | openai      | OPENAI_CHAT_MODELS_LIST        | `${OPENAI_API_BASE}/models`                                                                                      |
 | workers     | WORKERS_CHAT_MODELS_LIST       | `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/models/search?task=Text%20Generation` |
 | mistral     | MISTRAL_CHAT_MODELS_LIST       | `${MISTRAL_API_BASE}/models`                                                                                     |
-| cohere      | COHERE_CHAT_MODELS_LIST        | `https://api.cohere.com/v1/models`                                                                               |
+| cohere      | COHERE_CHAT_MODELS_LIST        | `${COHERE_API_BASE}/models`                                                                                      |
 | azure       | AZURE_CHAT_MODELS_LIST         | `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/models?api-version=${context.AZURE_API_VERSION}` |
-| gemini      | GOOGLE_COMPLETIONS_MODELS_LIST | `${GOOGLE_API_BASE}/v1beta/models`                                                                               |
+| gemini      | GOOGLE_CHAT_MODELS_LIST        | `${GOOGLE_API_BASE}/models`                                                                                      |
 | anthropic   | ANTHROPIC_CHAT_MODELS_LIST     | `${ANTHROPIC_API_BASE}/models`                                                                                   |

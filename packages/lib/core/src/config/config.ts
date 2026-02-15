@@ -15,7 +15,7 @@ export class OpenAIConfig {
     // OpenAI API Key
     OPENAI_API_KEY: string[] = [];
     // OpenAI的模型名称
-    OPENAI_CHAT_MODEL = 'gpt-4o-mini';
+    OPENAI_CHAT_MODEL = 'gpt-5-mini';
     // OpenAI API BASE
     OPENAI_API_BASE = 'https://api.openai.com/v1';
     // OpenAI API Extra Params
@@ -27,7 +27,7 @@ export class OpenAIConfig {
 // -- DALLE 配置 --
 export class DallEConfig {
     // DALL-E的模型名称
-    DALL_E_MODEL = 'dall-e-3';
+    DALL_E_MODEL = 'gpt-image-1';
     // DALL-E图片尺寸
     DALL_E_IMAGE_SIZE = '1024x1024';
     // DALL-E图片质量
@@ -35,7 +35,7 @@ export class DallEConfig {
     // DALL-E图片风格
     DALL_E_IMAGE_STYLE = 'vivid';
     // DALL-E Models List
-    DALL_E_MODELS_LIST = '["dall-e-3"]';
+    DALL_E_MODELS_LIST = '["gpt-image-1","dall-e-3"]';
 }
 
 // -- AZURE 配置 --
@@ -45,7 +45,7 @@ export class AzureConfig {
     // Azure Resource Name
     AZURE_RESOURCE_NAME: string | null = null;
     // Azure Chat Model
-    AZURE_CHAT_MODEL: string = 'gpt-4o-mini';
+    AZURE_CHAT_MODEL: string = 'gpt-5-mini';
     // Azure Image Model
     AZURE_IMAGE_MODEL: string = 'dall-e-3';
     // Azure API version
@@ -63,9 +63,9 @@ export class WorkersConfig {
     // Cloudflare Token
     CLOUDFLARE_TOKEN: string | null = null;
     // Text Generation Model
-    WORKERS_CHAT_MODEL = '@cf/qwen/qwen1.5-7b-chat-awq';
+    WORKERS_CHAT_MODEL = '@cf/qwen/qwen3-30b-a3b-fp8';
     // Text-to-Image Model
-    WORKERS_IMAGE_MODEL = '@cf/black-forest-labs/flux-1-schnell';
+    WORKERS_IMAGE_MODEL = '@cf/black-forest-labs/flux-2-dev';
     // Workers Chat Models List, When empty, will use the api to get the list
     WORKERS_CHAT_MODELS_LIST = '';
     // Workers Image Models List, When empty, will use the api to get the list
@@ -81,7 +81,7 @@ export class GeminiConfig {
     // Google Gemini API: https://ai.google.dev/gemini-api/docs/openai#rest
     GOOGLE_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
     // Google Gemini Model
-    GOOGLE_CHAT_MODEL = 'gemini-1.5-flash';
+    GOOGLE_CHAT_MODEL = 'gemini-3-flash-preview';
     // Google Chat Models List
     GOOGLE_CHAT_MODELS_LIST = '';
     // Google Chat API Extra Params
@@ -95,7 +95,7 @@ export class MistralConfig {
     // Mistral api base
     MISTRAL_API_BASE = 'https://api.mistral.ai/v1';
     // Mistral api model
-    MISTRAL_CHAT_MODEL = 'mistral-tiny';
+    MISTRAL_CHAT_MODEL = 'mistral-small-latest';
     // Mistral api chat models list
     MISTRAL_CHAT_MODELS_LIST = '';
     // Mistral Chat API Extra Params
@@ -123,7 +123,7 @@ export class AnthropicConfig {
     // Anthropic api base
     ANTHROPIC_API_BASE = 'https://api.anthropic.com/v1';
     // Anthropic api model
-    ANTHROPIC_CHAT_MODEL = 'claude-3-5-haiku-latest';
+    ANTHROPIC_CHAT_MODEL = 'claude-sonnet-4-5';
     // Anthropic api chat models list
     ANTHROPIC_CHAT_MODELS_LIST = '';
     // Anthropic Chat API Extra Params
@@ -151,7 +151,7 @@ export class GroqConfig {
     // Groq api base
     GROQ_API_BASE = 'https://api.groq.com/openai/v1';
     // Groq api model
-    GROQ_CHAT_MODEL = 'groq-chat';
+    GROQ_CHAT_MODEL = 'llama-3.3-70b-versatile';
     // Groq api chat models list
     GROQ_CHAT_MODELS_LIST = '';
     // Groq Chat API Extra Params
@@ -164,7 +164,7 @@ export class XAIConfig {
     // XAI api base
     XAI_API_BASE = 'https://api.x.ai/v1';
     // XAI api model
-    XAI_CHAT_MODEL = 'grok-2-latest';
+    XAI_CHAT_MODEL = 'grok-4-latest';
     // XAI api chat models list
     XAI_CHAT_MODELS_LIST = '';
     // XAI Chat API Extra Params
