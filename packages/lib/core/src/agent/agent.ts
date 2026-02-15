@@ -7,6 +7,21 @@ import { Gemini } from './gemini';
 import { Dalle, OpenAI } from './openai';
 import { WorkersChat, WorkersImage } from './workersai';
 
+interface NamedAgent {
+    name: string;
+    enable: (context: AgentUserConfig) => boolean;
+}
+
+function loadAgent<T extends NamedAgent>(agents: T[], preferredName: string | null | undefined, context: AgentUserConfig): T | null {
+    if (preferredName) {
+        const preferred = agents.find(agent => agent.name === preferredName);
+        if (preferred) {
+            return preferred;
+        }
+    }
+    return agents.find(agent => agent.enable(context)) || null;
+}
+
 export const CHAT_AGENTS: ChatAgent[] = [
     new OpenAI(),
     new Anthropic(),
@@ -21,18 +36,8 @@ export const CHAT_AGENTS: ChatAgent[] = [
 ];
 
 export function loadChatLLM(context: AgentUserConfig): ChatAgent | null {
-    for (const llm of CHAT_AGENTS) {
-        if (llm.name === context.AI_PROVIDER) {
-            return llm;
-        }
-    }
     // 找不到指定的AI，使用第一个可用的AI
-    for (const llm of CHAT_AGENTS) {
-        if (llm.enable(context)) {
-            return llm;
-        }
-    }
-    return null;
+    return loadAgent(CHAT_AGENTS, context.AI_PROVIDER, context);
 }
 
 export const IMAGE_AGENTS: ImageAgent[] = [
@@ -42,16 +47,6 @@ export const IMAGE_AGENTS: ImageAgent[] = [
 ];
 
 export function loadImageGen(context: AgentUserConfig): ImageAgent | null {
-    for (const imgGen of IMAGE_AGENTS) {
-        if (imgGen.name === context.AI_IMAGE_PROVIDER) {
-            return imgGen;
-        }
-    }
     // 找不到指定的AI，使用第一个可用的AI
-    for (const imgGen of IMAGE_AGENTS) {
-        if (imgGen.enable(context)) {
-            return imgGen;
-        }
-    }
-    return null;
+    return loadAgent(IMAGE_AGENTS, context.AI_IMAGE_PROVIDER, context);
 }

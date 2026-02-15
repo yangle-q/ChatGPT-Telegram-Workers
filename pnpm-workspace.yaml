@@ -1,3 +1,11 @@
 packages:
   - packages/apps/*
   - packages/lib/*
+
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver
+
+onlyBuiltDependencies:
+  - esbuild
+  - workerd
