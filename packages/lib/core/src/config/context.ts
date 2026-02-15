@@ -1,6 +1,6 @@
 import type { AgentUserConfig, AgentUserConfigKey } from '#/config/config';
 import type * as Telegram from 'telegram-bot-api-types';
-import { ENV, ENV_KEY_MAPPER } from './env';
+import { ENV } from './env';
 import { ConfigMerger } from './merger';
 
 function cloneAgentUserConfig(source: AgentUserConfig): AgentUserConfig {
@@ -109,8 +109,7 @@ export class WorkerContext {
 
     async execChangeAndSave(values: Record<AgentUserConfigKey, any>): Promise<void> {
         for (const ent of Object.entries(values || {})) {
-            let [key, value] = ent as [AgentUserConfigKey, any];
-            key = ENV_KEY_MAPPER[key] || key;
+            const [key, value] = ent as [AgentUserConfigKey, any];
             if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
                 throw new Error(`Key ${key} is locked`);
             }
