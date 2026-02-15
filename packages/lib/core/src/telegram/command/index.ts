@@ -105,8 +105,7 @@ export async function handleCommandMessage(message: Telegram.Message, context: W
         text = ENV.CUSTOM_COMMAND[text].value;
     }
 
-    if (ENV.DEV_MODE) {
-        // 插入调试命令
+    if (ENV.DEV_MODE && !SYSTEM_COMMANDS.some(c => c.command === '/echo')) {
         SYSTEM_COMMANDS.push(new EchoCommandHandler());
     }
 

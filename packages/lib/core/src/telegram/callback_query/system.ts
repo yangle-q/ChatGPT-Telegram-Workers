@@ -17,11 +17,11 @@ import { MessageSender } from '../sender';
 export class AgentListCallbackQueryHandler implements CallbackQueryHandler {
     prefix: string;
     changeAgentPrefix: string;
-    agentLoader: () => string[];
+    agentLoader: (context: WorkerContext) => string[];
 
     needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
 
-    constructor(prefix: string, changeAgentPrefix: string, agentLoader: () => string[]) {
+    constructor(prefix: string, changeAgentPrefix: string, agentLoader: (context: WorkerContext) => string[]) {
         this.prefix = prefix;
         this.changeAgentPrefix = changeAgentPrefix;
         this.agentLoader = agentLoader;
@@ -29,25 +29,25 @@ export class AgentListCallbackQueryHandler implements CallbackQueryHandler {
     }
 
     static Chat(): AgentListCallbackQueryHandler {
-        return new AgentListCallbackQueryHandler('al:', 'ca:', () => {
+        return new AgentListCallbackQueryHandler('al:', 'ca:', (context: WorkerContext) => {
             return CHAT_AGENT_FACTORIES
-                .map(factory => factory.create(ENV.USER_CONFIG))
+                .map(factory => factory.create(context.USER_CONFIG))
                 .filter(agent => agent !== null)
                 .map(agent => agent.name);
         });
     }
 
     static Image(): AgentListCallbackQueryHandler {
-        return new AgentListCallbackQueryHandler('ial:', 'ica:', () => {
+        return new AgentListCallbackQueryHandler('ial:', 'ica:', (context: WorkerContext) => {
             return IMAGE_AGENT_FACTORIES
-                .map(factory => factory.create(ENV.USER_CONFIG))
+                .map(factory => factory.create(context.USER_CONFIG))
                 .filter(agent => agent !== null)
                 .map(agent => agent.name);
         });
     }
 
     handle = async (query: Telegram.CallbackQuery, data: string, context: WorkerContext): Promise<Response> => {
-        const names = this.agentLoader();
+        const names = this.agentLoader(context);
         const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
         const params: Telegram.EditMessageTextParams = {
             chat_id: query.message?.chat.id || 0,
@@ -115,7 +115,7 @@ function loadAgentContext<T = any>(
     if (!agent) {
         throw new Error(`agent not found: ${agent}`);
     }
-    const conf: AgentUserConfig = changeAgentType(ENV.USER_CONFIG, agent);
+    const conf: AgentUserConfig = changeAgentType(context.USER_CONFIG, agent);
     const theAgent = agentLoader(conf);
     if (!theAgent) {
         throw new Error(`agent not found: ${agent}`);

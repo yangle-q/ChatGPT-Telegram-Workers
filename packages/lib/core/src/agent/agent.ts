@@ -30,15 +30,7 @@ function loadAgentFromFactories<AgentType>(
     return null;
 }
 
-export const CHAT_AGENT_FACTORIES: ChatAgentFactory[] = CHAT_PROVIDER_FACTORIES.map((factory) => {
-    return {
-        name: factory.name,
-        create: (context: AgentUserConfig): ChatAgent | null => {
-            return factory.create(context);
-        },
-    };
-});
-export const CHAT_AGENTS = CHAT_AGENT_FACTORIES;
+export const CHAT_AGENT_FACTORIES: ChatAgentFactory[] = CHAT_PROVIDER_FACTORIES;
 
 const CHAT_PROVIDER_MODEL_KEYS = new Map<string, string>(
     CHAT_PROVIDER_FACTORIES.map(factory => [factory.name, factory.modelKey]),
@@ -56,15 +48,7 @@ export function loadChatLLM(context: AgentUserConfig): ChatAgent | null {
     return loadAgentFromFactories(CHAT_AGENT_FACTORIES, context.AI_PROVIDER, context);
 }
 
-export const IMAGE_AGENT_FACTORIES: ImageAgentFactory[] = IMAGE_PROVIDER_FACTORIES.map((factory) => {
-    return {
-        name: factory.name,
-        create: (context: AgentUserConfig): ImageAgent | null => {
-            return factory.create(context);
-        },
-    };
-});
-export const IMAGE_AGENTS = IMAGE_AGENT_FACTORIES;
+export const IMAGE_AGENT_FACTORIES: ImageAgentFactory[] = IMAGE_PROVIDER_FACTORIES;
 
 const IMAGE_PROVIDER_MODEL_KEYS = new Map<string, string>(
     IMAGE_PROVIDER_FACTORIES.map(factory => [factory.name, factory.modelKey]),

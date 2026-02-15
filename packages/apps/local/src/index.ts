@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as process from 'node:process';
-import { CHAT_AGENTS, createRouter, ENV, handleUpdate } from '@chatgpt-telegram-workers/core';
+import { CHAT_AGENT_FACTORIES, createRouter, ENV, handleUpdate } from '@chatgpt-telegram-workers/core';
 import { injectNextChatAgent } from '@chatgpt-telegram-workers/next';
 import { createCache, defaultRequestBuilder, initEnv, installFetchProxy, startServerV2 } from 'cloudflare-worker-adapter';
 import convert from 'telegramify-markdown';
@@ -46,7 +46,7 @@ ENV.CUSTOM_MESSAGE_RENDER = (parse_mode, message) => {
 
 // 注入 Next.js Chat Agent
 if (NEXT_ENABLE !== '0') {
-    injectNextChatAgent(CHAT_AGENTS);
+    injectNextChatAgent(CHAT_AGENT_FACTORIES);
 }
 if (config.proxy) {
     installFetchProxy(config.proxy);

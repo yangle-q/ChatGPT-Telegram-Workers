@@ -1,4 +1,5 @@
 import type { SseChatCompatibleOptions } from '#/agent/core/request';
+import { randomOpenAIApiKey } from '#/agent/provider_settings';
 import type {
     ChatAgent,
     ChatAgentRequest,
@@ -87,10 +88,7 @@ async function renderOpenAIMessage(item: HistoryItem, supportImage?: ImageSuppor
     return res;
 }
 
-function openAIApiKey(keys: string[]): string {
-    const length = keys.length;
-    return keys[Math.floor(Math.random() * length)];
-}
+
 
 export async function renderOpenAIMessages(prompt: string | undefined, items: HistoryItem[], supportImage?: ImageSupportFormat[] | null): Promise<any[]> {
     const messages = await Promise.all(items.map(r => renderOpenAIMessage(r, supportImage)));
@@ -190,7 +188,7 @@ export class Dalle implements ImageAgent {
         this.modelList = () => loadModelsList(settings.modelsList);
         this.request = async (prompt: string): Promise<string | Blob> => {
             const url = `${settings.apiBase}/images/generations`;
-            const header = bearerHeader(openAIApiKey(settings.apiKeys));
+            const header = bearerHeader(randomOpenAIApiKey(settings.apiKeys) || '');
             const body: any = {
                 prompt,
                 n: 1,

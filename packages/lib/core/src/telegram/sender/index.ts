@@ -3,7 +3,7 @@ import type { TelegramBotAPI } from '../api';
 import { ENV } from '#/config';
 import { createTelegramBotAPI } from '../api';
 
-class MessageContext implements Record<string, any> {
+class MessageContext {
     chat_id: number;
     message_id: number | null = null; // 当前发生的消息，用于后续编辑
     reply_to_message_id: number | null = null;
@@ -72,14 +72,12 @@ export class MessageSender {
         throw new Error('Invalid update');
     }
 
-    update(context: MessageContext | Record<string, any>): MessageSender {
+    update(context: Partial<MessageContext>): MessageSender {
         if (!this.context) {
-            this.context = context as any;
+            this.context = context as MessageContext;
             return this;
         }
-        for (const key in context) {
-            (this.context as any)[key] = (context as any)[key];
-        }
+        Object.assign(this.context, context);
         return this;
     }
 

@@ -1,7 +1,6 @@
 import type { AgentUserConfig } from '#/config';
 import type { AnthropicSettings } from './providers/anthropic';
 import type { AzureChatSettings, AzureImageSettings } from './providers/azure';
-import type { GeminiSettings } from './providers/gemini';
 import type { DallESettings, OpenAICompatibleSettings } from './providers/openai';
 import type { WorkersChatSettings, WorkersImageSettings } from './providers/workers';
 import { ENV } from '#/config';
@@ -19,7 +18,7 @@ export function isWorkersEnabled(context: AgentUserConfig): boolean {
     return !!(context.CLOUDFLARE_ACCOUNT_ID && context.CLOUDFLARE_TOKEN);
 }
 
-function randomOpenAIApiKey(keys: string[]): string | null {
+export function randomOpenAIApiKey(keys: string[]): string | null {
     const length = keys.length;
     if (length <= 0) {
         return null;
@@ -84,13 +83,13 @@ export function createAnthropicSettings(context: AgentUserConfig): AnthropicSett
     };
 }
 
-export function createGeminiSettings(context: AgentUserConfig): GeminiSettings {
+export function createGeminiSettings(context: AgentUserConfig): OpenAICompatibleSettings {
     return {
-        apiBase: context.GOOGLE_API_BASE,
-        apiKey: context.GOOGLE_API_KEY,
-        chatModel: context.GOOGLE_CHAT_MODEL,
-        chatModelsList: context.GOOGLE_CHAT_MODELS_LIST,
-        chatExtraParams: context.GOOGLE_CHAT_EXTRA_PARAMS || undefined,
+        base: context.GOOGLE_API_BASE,
+        key: context.GOOGLE_API_KEY,
+        model: context.GOOGLE_CHAT_MODEL,
+        modelsList: context.GOOGLE_CHAT_MODELS_LIST,
+        extraParams: context.GOOGLE_CHAT_EXTRA_PARAMS || undefined,
     };
 }
 
