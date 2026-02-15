@@ -107,9 +107,9 @@ export class CohereConfig {
     // Cohere api key
     COHERE_API_KEY: string | null = null;
     // Cohere api base
-    COHERE_API_BASE = 'https://api.cohere.com/v2';
+    COHERE_API_BASE = 'https://api.cohere.ai/compatibility/v1';
     // Cohere api model
-    COHERE_CHAT_MODEL = 'command-r-plus';
+    COHERE_CHAT_MODEL = 'command-a-03-2025';
     // Cohere api chat models list
     COHERE_CHAT_MODELS_LIST = '';
     // Cohere Chat API Extra Params

@@ -47,3 +47,15 @@ export class XAi extends OpenAICompatibilityAgent {
         });
     }
 }
+
+export class Cohere extends OpenAICompatibilityAgent {
+    constructor() {
+        super('cohere', {
+            base: 'COHERE_API_BASE',
+            key: 'COHERE_API_KEY',
+            model: 'COHERE_CHAT_MODEL',
+            modelsList: 'COHERE_CHAT_MODELS_LIST',
+            extraParams: 'COHERE_CHAT_EXTRA_PARAMS',
+        });
+    }
+}

@@ -1,9 +1,8 @@
 import type { AgentUserConfig } from '#/config';
 import type { ChatAgent, ImageAgent } from './types';
-import { DeepSeek, Groq, Mistral, XAi } from '#/agent/openai_agents';
+import { Cohere, DeepSeek, Groq, Mistral, XAi } from '#/agent/openai_agents';
 import { Anthropic } from './anthropic';
 import { AzureChatAI, AzureImageAI } from './azure';
-import { Cohere } from './cohere';
 import { Gemini } from './gemini';
 import { Dalle, OpenAI } from './openai';
 import { WorkersChat, WorkersImage } from './workersai';
