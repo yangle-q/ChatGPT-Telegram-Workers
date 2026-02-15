@@ -1,5 +1,14 @@
 import type { ProviderV2 } from '@ai-sdk/provider';
-import type { AgentUserConfig, ChatAgent, ChatAgentResponse, ChatStreamTextHandler, HistoryItem, LLMChatParams, ResponseMessage } from '@chatgpt-telegram-workers/core';
+import type {
+    AgentUserConfig,
+    ChatAgent,
+    ChatAgentFactory,
+    ChatAgentResponse,
+    ChatStreamTextHandler,
+    HistoryItem,
+    LLMChatParams,
+    ResponseMessage,
+} from '@chatgpt-telegram-workers/core';
 import type { AssistantModelMessage, LanguageModel, ModelMessage, ToolModelMessage } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createAzure } from '@ai-sdk/azure';
@@ -50,31 +59,33 @@ export type ProviderCreator = (context: AgentUserConfig) => ProviderV2;
 
 export class NextChatAgent implements ChatAgent {
     readonly name: string;
-    readonly modelKey: string;
     readonly adapter: ChatAgent;
-    readonly providerCreator: ProviderCreator;
+    readonly provider: ProviderV2;
 
-    constructor(adapter: ChatAgent, providerCreator: ProviderCreator) {
+    constructor(adapter: ChatAgent, provider: ProviderV2) {
         this.name = adapter.name;
-        this.modelKey = adapter.modelKey;
         this.adapter = adapter;
-        this.providerCreator = providerCreator;
+        this.provider = provider;
     }
 
-    static from(agent: ChatAgent): NextChatAgent | null {
-        const provider = this.newProviderCreator(agent.name);
-        if (!provider) {
-            return null;
+    get model(): string | null {
+        return this.adapter.model;
+    }
+
+    readonly request = async (params: LLMChatParams, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
+        const model = this.model;
+        if (!model) {
+            throw new Error('Model not found');
         }
-        return new NextChatAgent(agent, provider);
-    }
-
-    readonly enable = (context: AgentUserConfig): boolean => {
-        return this.adapter.enable(context);
+        return requestChatCompletionsV2({
+            model: this.provider.languageModel(model),
+            messages: params.messages,
+            system: params.prompt,
+        }, onStream);
     };
 
-    readonly model = (ctx: AgentUserConfig): string | null => {
-        return this.adapter.model(ctx);
+    readonly modelList = async (): Promise<string[]> => {
+        return this.adapter.modelList();
     };
 
     static newProviderCreator = (provider: string): ProviderCreator | null => {
@@ -113,29 +124,41 @@ export class NextChatAgent implements ChatAgent {
                 return null;
         }
     };
-
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
-        const model = this.model(context);
-        if (!model) {
-            throw new Error('Model not found');
-        }
-        return requestChatCompletionsV2({
-            model: this.providerCreator(context).languageModel(model),
-            messages: params.messages,
-            system: params.prompt,
-        }, onStream);
-    };
-
-    readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
-        return this.adapter.modelList(context);
-    };
 }
 
-export function injectNextChatAgent(agents: ChatAgent[]) {
-    for (let i = 0; i < agents.length; i++) {
-        const next = NextChatAgent.from(agents[i]);
+export class NextChatAgentFactory implements ChatAgentFactory {
+    readonly name: string;
+    readonly adapterFactory: ChatAgentFactory;
+    readonly providerCreator: ProviderCreator;
+
+    constructor(adapterFactory: ChatAgentFactory, providerCreator: ProviderCreator) {
+        this.name = adapterFactory.name;
+        this.adapterFactory = adapterFactory;
+        this.providerCreator = providerCreator;
+    }
+
+    readonly create = (context: AgentUserConfig): ChatAgent | null => {
+        const adapter = this.adapterFactory.create(context);
+        if (!adapter) {
+            return null;
+        }
+        return new NextChatAgent(adapter, this.providerCreator(context));
+    };
+
+    static from(factory: ChatAgentFactory): NextChatAgentFactory | null {
+        const providerCreator = NextChatAgent.newProviderCreator(factory.name);
+        if (!providerCreator) {
+            return null;
+        }
+        return new NextChatAgentFactory(factory, providerCreator);
+    }
+}
+
+export function injectNextChatAgent(factories: ChatAgentFactory[]) {
+    for (let i = 0; i < factories.length; i++) {
+        const next = NextChatAgentFactory.from(factories[i]);
         if (next) {
-            agents[i] = next;
+            factories[i] = next;
         }
     }
 }

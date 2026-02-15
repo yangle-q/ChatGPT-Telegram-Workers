@@ -41,21 +41,25 @@ export interface ChatAgentResponse {
 export type ChatStreamTextHandler = (text: string) => Promise<any>;
 export type HistoryModifier = (history: HistoryItem[], message: UserMessageItem | null) => HistoryModifierResult;
 
-export type AgentEnable = (context: AgentUserConfig) => boolean;
-export type AgentModel = (ctx: AgentUserConfig) => string | null;
-export type AgentModelList = (ctx: AgentUserConfig) => Promise<string[]>;
-export type ChatAgentRequest = (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null) => Promise<ChatAgentResponse>;
-export type ImageAgentRequest = (prompt: string, context: AgentUserConfig) => Promise<string | Blob>;
+export type ChatAgentRequest = (params: LLMChatParams, onStream: ChatStreamTextHandler | null) => Promise<ChatAgentResponse>;
+export type ImageAgentRequest = (prompt: string) => Promise<string | Blob>;
 
 export interface Agent<AgentRequest> {
     name: string;
-    enable: AgentEnable;
-    modelKey: string;
-    model: AgentModel;
-    modelList: AgentModelList;
+    model: string | null;
+    modelList: () => Promise<string[]>;
     request: AgentRequest;
 }
 
 export interface ChatAgent extends Agent<ChatAgentRequest> {}
 
 export interface ImageAgent extends Agent<ImageAgentRequest> {}
+
+export interface AgentFactory<AgentType> {
+    name: string;
+    create: (context: AgentUserConfig) => AgentType | null;
+}
+
+export interface ChatAgentFactory extends AgentFactory<ChatAgent> {}
+
+export interface ImageAgentFactory extends AgentFactory<ImageAgent> {}

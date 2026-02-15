@@ -1,48 +1,83 @@
 import type { AgentUserConfig } from '#/config';
-import type { ChatAgent, ImageAgent } from './types';
-import { OPENAI_COMPAT_CHAT_AGENTS } from '#/agent/openai_agents';
-import { Anthropic } from './anthropic';
-import { AzureChatAI, AzureImageAI } from './azure';
-import { Gemini } from './gemini';
-import { Dalle, OpenAI } from './openai';
-import { WorkersChat, WorkersImage } from './workersai';
+import type { ChatAgent, ChatAgentFactory, ImageAgent, ImageAgentFactory } from './core/types';
+import { CHAT_PROVIDER_FACTORIES, IMAGE_PROVIDER_FACTORIES } from './provider_factories';
 
-interface NamedAgent {
+interface NamedAgentFactory<AgentType> {
     name: string;
-    enable: (context: AgentUserConfig) => boolean;
+    create: (context: AgentUserConfig) => AgentType | null;
 }
 
-function loadAgent<T extends NamedAgent>(agents: T[], preferredName: string | null | undefined, context: AgentUserConfig): T | null {
+function loadAgentFromFactories<AgentType>(
+    factories: NamedAgentFactory<AgentType>[],
+    preferredName: string | null | undefined,
+    context: AgentUserConfig,
+): AgentType | null {
     if (preferredName) {
-        const preferred = agents.find(agent => agent.name === preferredName);
+        const preferred = factories.find(factory => factory.name === preferredName);
         if (preferred) {
-            return preferred;
+            const preferredAgent = preferred.create(context);
+            if (preferredAgent) {
+                return preferredAgent;
+            }
         }
     }
-    return agents.find(agent => agent.enable(context)) || null;
+    for (const factory of factories) {
+        const agent = factory.create(context);
+        if (agent) {
+            return agent;
+        }
+    }
+    return null;
 }
 
-export const CHAT_AGENTS: ChatAgent[] = [
-    new OpenAI(),
-    new Anthropic(),
-    new AzureChatAI(),
-    new WorkersChat(),
-    new Gemini(),
-    ...OPENAI_COMPAT_CHAT_AGENTS,
-];
+export const CHAT_AGENT_FACTORIES: ChatAgentFactory[] = CHAT_PROVIDER_FACTORIES.map((factory) => {
+    return {
+        name: factory.name,
+        create: (context: AgentUserConfig): ChatAgent | null => {
+            return factory.create(context);
+        },
+    };
+});
+export const CHAT_AGENTS = CHAT_AGENT_FACTORIES;
+
+const CHAT_PROVIDER_MODEL_KEYS = new Map<string, string>(
+    CHAT_PROVIDER_FACTORIES.map(factory => [factory.name, factory.modelKey]),
+);
+
+export function getChatAgentModelKey(provider: string | null | undefined): string | null {
+    if (!provider) {
+        return null;
+    }
+    return CHAT_PROVIDER_MODEL_KEYS.get(provider) || null;
+}
 
 export function loadChatLLM(context: AgentUserConfig): ChatAgent | null {
     // 找不到指定的AI，使用第一个可用的AI
-    return loadAgent(CHAT_AGENTS, context.AI_PROVIDER, context);
+    return loadAgentFromFactories(CHAT_AGENT_FACTORIES, context.AI_PROVIDER, context);
 }
 
-export const IMAGE_AGENTS: ImageAgent[] = [
-    new AzureImageAI(),
-    new Dalle(),
-    new WorkersImage(),
-];
+export const IMAGE_AGENT_FACTORIES: ImageAgentFactory[] = IMAGE_PROVIDER_FACTORIES.map((factory) => {
+    return {
+        name: factory.name,
+        create: (context: AgentUserConfig): ImageAgent | null => {
+            return factory.create(context);
+        },
+    };
+});
+export const IMAGE_AGENTS = IMAGE_AGENT_FACTORIES;
+
+const IMAGE_PROVIDER_MODEL_KEYS = new Map<string, string>(
+    IMAGE_PROVIDER_FACTORIES.map(factory => [factory.name, factory.modelKey]),
+);
+
+export function getImageAgentModelKey(provider: string | null | undefined): string | null {
+    if (!provider) {
+        return null;
+    }
+    return IMAGE_PROVIDER_MODEL_KEYS.get(provider) || null;
+}
 
 export function loadImageGen(context: AgentUserConfig): ImageAgent | null {
     // 找不到指定的AI，使用第一个可用的AI
-    return loadAgent(IMAGE_AGENTS, context.AI_IMAGE_PROVIDER, context);
+    return loadAgentFromFactories(IMAGE_AGENT_FACTORIES, context.AI_IMAGE_PROVIDER, context);
 }

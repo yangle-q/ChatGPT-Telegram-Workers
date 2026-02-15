@@ -1,30 +1,51 @@
-import type { SseChatCompatibleOptions } from '#/agent/request';
+import type { SseChatCompatibleOptions } from '#/agent/core/request';
 import type {
-    AgentEnable,
-    AgentModel,
-    AgentModelList,
     ChatAgent,
     ChatAgentRequest,
     ChatAgentResponse,
     ChatStreamTextHandler,
     HistoryItem,
+    ImageAgent,
+    ImageAgentRequest,
     LLMChatParams,
-} from '#/agent/types';
-import type { AgentUserConfig, AgentUserConfigKey } from '#/config';
-import { requestChatCompletions } from '#/agent/request';
-import {
-    bearerHeader,
-    convertStringToResponseMessages,
-    extractImageContent,
-    getAgentUserConfigFieldName,
-    loadModelsList,
-} from '#/agent/utils';
+} from '#/agent/core/types';
+import { requestChatCompletions } from '#/agent/core/request';
+import { bearerHeader, convertStringToResponseMessages, extractImageContent, loadModelsList } from '#/agent/core/utils';
 import { ENV } from '#/config';
 import { imageToBase64String, renderBase64DataURI } from '#/utils/image';
 
 export enum ImageSupportFormat {
     URL = 'url',
     BASE64 = 'base64',
+}
+
+export interface OpenAICompatibleSettings {
+    base: string;
+    key: string | null;
+    model: string;
+    modelsList: string;
+    extraParams?: Record<string, any>;
+}
+
+export interface OpenAIRequestHook {
+    stream?: (text: string) => string;
+    finish?: (text: string) => string;
+}
+
+export type OpenAIRequestBuilder = (
+    params: LLMChatParams,
+    settings: OpenAICompatibleSettings,
+    stream: boolean,
+) => Promise<{ url: string; header: Record<string, string>; body: any }>;
+
+export interface DallESettings {
+    apiBase: string;
+    apiKeys: string[];
+    model: string;
+    modelsList: string;
+    imageSize: string;
+    imageQuality: string;
+    imageStyle: string;
 }
 
 async function renderOpenAIMessage(item: HistoryItem, supportImage?: ImageSupportFormat[] | null): Promise<any> {
@@ -66,6 +87,11 @@ async function renderOpenAIMessage(item: HistoryItem, supportImage?: ImageSuppor
     return res;
 }
 
+function openAIApiKey(keys: string[]): string {
+    const length = keys.length;
+    return keys[Math.floor(Math.random() * length)];
+}
+
 export async function renderOpenAIMessages(prompt: string | undefined, items: HistoryItem[], supportImage?: ImageSupportFormat[] | null): Promise<any[]> {
     const messages = await Promise.all(items.map(r => renderOpenAIMessage(r, supportImage)));
     if (prompt) {
@@ -87,35 +113,14 @@ export function loadOpenAIModelList(list: string, base: string, headers: Record<
     });
 }
 
-type OpenAIRequestBuilder = (params: LLMChatParams, context: AgentUserConfig, stream: boolean) => Promise<{ url: string; header: Record<string, string>; body: any }>;
-type AgentConfigFieldGetter = (ctx: AgentUserConfig) => { base: string; key: string | null; model: string; modelsList: string; extraParams?: Record<string, any> };
-
-interface AgentConfigFields {
-    base: AgentUserConfigKey;
-    key: AgentUserConfigKey;
-    model: AgentUserConfigKey;
-    modelsList: AgentUserConfigKey;
-    extraParams: AgentUserConfigKey;
-}
-
-export function agentConfigFieldGetter(fields: AgentConfigFields): AgentConfigFieldGetter {
-    return (ctx: AgentUserConfig) => ({
-        base: ctx[fields.base] as string,
-        key: ctx[fields.key] as string || null,
-        model: ctx[fields.model] as string,
-        modelsList: ctx[fields.modelsList] as string,
-        extraParams: ctx[fields.extraParams] as Record<string, any> || undefined,
-    });
-}
-
-export interface OpenAIRequestHook {
-    stream?: (text: string) => string;
-    finish?: (text: string) => string;
-}
-
-export function createOpenAIRequest(builder: OpenAIRequestBuilder, options?: SseChatCompatibleOptions, hooks?: OpenAIRequestHook): ChatAgentRequest {
-    return async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
-        const { url, header, body } = await builder(params, context, onStream !== null);
+export function createOpenAIRequest(
+    builder: OpenAIRequestBuilder,
+    settings: OpenAICompatibleSettings,
+    options?: SseChatCompatibleOptions,
+    hooks?: OpenAIRequestHook,
+): ChatAgentRequest {
+    return async (params: LLMChatParams, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
+        const { url, header, body } = await builder(params, settings, onStream !== null);
         if (onStream && hooks?.stream) {
             const onStreamOriginal = onStream;
             onStream = (text: string) => {
@@ -130,54 +135,82 @@ export function createOpenAIRequest(builder: OpenAIRequestBuilder, options?: Sse
     };
 }
 
-export function createAgentEnable(valueGetter: AgentConfigFieldGetter): AgentEnable {
-    return (ctx: AgentUserConfig) => !!(valueGetter(ctx).key);
-}
-
-export function createAgentModel(valueGetter: AgentConfigFieldGetter): AgentModel {
-    return (ctx: AgentUserConfig) => valueGetter(ctx).model;
-}
-
-export function createAgentModelList(valueGetter: AgentConfigFieldGetter): AgentModelList {
-    return (ctx: AgentUserConfig): Promise<string[]> => {
-        const { base, key, modelsList } = valueGetter(ctx);
-        return loadOpenAIModelList(modelsList, base, bearerHeader(key));
-    };
-}
-
-export function defaultOpenAIRequestBuilder(valueGetter: AgentConfigFieldGetter, completionsEndpoint: string = '/chat/completions', supportImage: ImageSupportFormat[] = [ImageSupportFormat.URL]): OpenAIRequestBuilder {
-    return async (params: LLMChatParams, context: AgentUserConfig, stream: boolean) => {
+export function defaultOpenAIRequestBuilder(
+    completionsEndpoint: string = '/chat/completions',
+    supportImage: ImageSupportFormat[] = [ImageSupportFormat.URL],
+): OpenAIRequestBuilder {
+    return async (params: LLMChatParams, settings: OpenAICompatibleSettings, stream: boolean) => {
         const { prompt, messages } = params;
-        const { base, key, model, extraParams } = valueGetter(context);
+        const { base, key, model, extraParams } = settings;
         const url = `${base}${completionsEndpoint}`;
         const header = bearerHeader(key, stream);
-
         const body = {
             ...(extraParams || {}),
             model,
             stream,
             messages: await renderOpenAIMessages(prompt, messages, supportImage),
         };
-
         return { url, header, body };
     };
 }
 
-export class OpenAICompatibilityAgent implements ChatAgent {
+export class OpenAI implements ChatAgent {
     readonly name: string;
-    readonly modelKey: string;
-    readonly enable: AgentEnable;
-    readonly model: AgentModel;
-    readonly modelList: AgentModelList;
+    readonly model: string;
+    readonly modelList: () => Promise<string[]>;
     readonly request: ChatAgentRequest;
 
-    constructor(name: string, fields: AgentConfigFields, options?: SseChatCompatibleOptions, hooks?: OpenAIRequestHook) {
+    constructor(
+        name: string,
+        settings: OpenAICompatibleSettings,
+        requestBuilder?: OpenAIRequestBuilder,
+        options?: SseChatCompatibleOptions,
+        hooks?: OpenAIRequestHook,
+    ) {
         this.name = name;
-        this.modelKey = getAgentUserConfigFieldName(fields.model);
-        const valueGetter = agentConfigFieldGetter(fields);
-        this.enable = createAgentEnable(valueGetter);
-        this.model = createAgentModel(valueGetter);
-        this.modelList = createAgentModelList(valueGetter);
-        this.request = createOpenAIRequest(defaultOpenAIRequestBuilder(valueGetter), options, hooks);
+        this.model = settings.model;
+        this.modelList = () => loadOpenAIModelList(settings.modelsList, settings.base, bearerHeader(settings.key));
+        this.request = createOpenAIRequest(
+            requestBuilder || defaultOpenAIRequestBuilder(),
+            settings,
+            options,
+            hooks,
+        );
+    }
+}
+
+export class Dalle implements ImageAgent {
+    readonly name = 'openai';
+    readonly model: string;
+    readonly modelList: () => Promise<string[]>;
+    readonly request: ImageAgentRequest;
+
+    constructor(private readonly settings: DallESettings) {
+        this.model = settings.model;
+        this.modelList = () => loadModelsList(settings.modelsList);
+        this.request = async (prompt: string): Promise<string | Blob> => {
+            const url = `${settings.apiBase}/images/generations`;
+            const header = bearerHeader(openAIApiKey(settings.apiKeys));
+            const body: any = {
+                prompt,
+                n: 1,
+                size: settings.imageSize,
+                model: settings.model,
+            };
+            if (body.model === 'dall-e-3') {
+                body.quality = settings.imageQuality;
+                body.style = settings.imageStyle;
+            }
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: header,
+                body: JSON.stringify(body),
+            }).then(res => res.json()) as any;
+
+            if (resp.error?.message) {
+                throw new Error(resp.error.message);
+            }
+            return resp?.data?.at(0)?.url;
+        };
     }
 }

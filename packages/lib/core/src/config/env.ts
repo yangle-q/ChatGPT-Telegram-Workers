@@ -2,7 +2,22 @@ import type { I18n } from '#/i18n';
 import type { APIGuardBinding, KVNamespaceBinding, WorkerAIBinding } from './binding';
 import type { AgentUserConfig, AgentUserConfigKey } from './config';
 import { loadI18n } from '#/i18n';
-import { AgentShareConfig, AnthropicConfig, AzureConfig, CohereConfig, DallEConfig, DeepSeekConfig, DefineKeys, EnvironmentConfig, GeminiConfig, GroqConfig, MistralConfig, OpenAIConfig, WorkersConfig, XAIConfig } from './config';
+import {
+    AgentShareConfig,
+    AnthropicConfig,
+    AzureConfig,
+    CohereConfig,
+    DallEConfig,
+    DeepSeekConfig,
+    DefineKeys,
+    EnvironmentConfig,
+    GeminiConfig,
+    GroqConfig,
+    MistralConfig,
+    OpenAIConfig,
+    WorkersConfig,
+    XAIConfig,
+} from './config';
 import { ConfigMerger } from './merger';
 import { BUILD_TIMESTAMP, BUILD_VERSION } from './version';
 

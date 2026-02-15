@@ -2,7 +2,7 @@ import type { HistoryItem, HistoryModifierResult, UserMessageItem } from '#/agen
 import type { AgentUserConfigKey, WorkerContext } from '#/config';
 import type * as Telegram from 'telegram-bot-api-types';
 import type { CommandHandler } from './types';
-import { loadChatLLM, loadImageGen } from '#/agent';
+import { getChatAgentModelKey, getImageAgentModelKey, loadChatLLM, loadImageGen } from '#/agent';
 import { ConfigMerger, ENV } from '#/config';
 import { createTelegramBotAPI } from '../api';
 import { isGroupChat, TELEGRAM_AUTH_CHECKER } from '../auth';
@@ -16,7 +16,7 @@ export class ImgCommandHandler implements CommandHandler {
         const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
         if (subcommand === '') {
             const imgAgent = loadImageGen(context.USER_CONFIG);
-            const text = `${ENV.I18N.command.help.img}\n\n${imgAgent?.name || 'Nan'} | ${imgAgent?.model(context.USER_CONFIG) || 'Nan'}`;
+            const text = `${ENV.I18N.command.help.img}\n\n${imgAgent?.name || 'Nan'} | ${imgAgent?.model || 'Nan'}`;
             const params: Telegram.SendMessageParams = {
                 chat_id: message.chat.id,
                 text,
@@ -41,7 +41,7 @@ export class ImgCommandHandler implements CommandHandler {
                 chat_id: message.chat.id,
                 action: 'upload_photo',
             }).catch(console.error), 0);
-            const img = await agent.request(subcommand, context.USER_CONFIG);
+            const img = await agent.request(subcommand);
             const resp = await sender.sendPhoto(img);
             if (!resp.ok) {
                 return sender.sendPlainText(`ERROR: ${resp.statusText} ${await resp.text()}`);
@@ -230,11 +230,13 @@ export class SystemCommandHandler implements CommandHandler {
         const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
         const chatAgent = loadChatLLM(context.USER_CONFIG);
         const imageAgent = loadImageGen(context.USER_CONFIG);
+        const chatModelKey = getChatAgentModelKey(chatAgent?.name);
+        const imageModelKey = getImageAgentModelKey(imageAgent?.name);
         const agent = {
             AI_PROVIDER: chatAgent?.name,
-            [chatAgent?.modelKey || 'AI_PROVIDER_NOT_FOUND']: chatAgent?.model(context.USER_CONFIG),
+            [chatModelKey || 'AI_PROVIDER_NOT_FOUND']: chatAgent?.model,
             AI_IMAGE_PROVIDER: imageAgent?.name,
-            [imageAgent?.modelKey || 'AI_IMAGE_PROVIDER_NOT_FOUND']: imageAgent?.model(context.USER_CONFIG),
+            [imageModelKey || 'AI_IMAGE_PROVIDER_NOT_FOUND']: imageAgent?.model,
         };
         let msg = `<strong>AGENT</strong><pre>${JSON.stringify(agent, null, 2)}</pre>`;
         if (ENV.DEV_MODE) {
@@ -296,7 +298,7 @@ export class ModelsCommandHandler implements CommandHandler {
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
         const chatAgent = loadChatLLM(context.USER_CONFIG);
-        const text = `${chatAgent?.name || 'Nan'} | ${chatAgent?.model(context.USER_CONFIG) || 'Nan'}`;
+        const text = `${chatAgent?.name || 'Nan'} | ${chatAgent?.model || 'Nan'}`;
         const params: Telegram.SendMessageParams = {
             chat_id: message.chat.id,
             text,

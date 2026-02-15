@@ -1,4 +1,4 @@
-import type { LLMChatParams } from './types';
+import type { LLMChatParams } from './core/types';
 import { ENV } from '#/config';
 import { loadChatLLM } from './agent';
 import '#/config/env.test';
@@ -19,7 +19,7 @@ describe('agent', () => {
             ],
         };
         expect(agent?.name).toBe('cohere');
-        const res = await agent?.request(params, ENV.USER_CONFIG, async (text) => {
+        const res = await agent?.request(params, async (text: string) => {
             console.log(text);
         });
         expect(res).toBeDefined();

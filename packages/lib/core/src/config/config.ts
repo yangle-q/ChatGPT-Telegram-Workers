@@ -122,6 +122,10 @@ export class AnthropicConfig {
     ANTHROPIC_API_KEY: string | null = null;
     // Anthropic api base
     ANTHROPIC_API_BASE = 'https://api.anthropic.com/v1';
+    // Anthropic api version header
+    ANTHROPIC_API_VERSION = '2023-06-01';
+    // Anthropic beta headers
+    ANTHROPIC_API_BETA: string[] = [];
     // Anthropic api model
     ANTHROPIC_CHAT_MODEL = 'claude-sonnet-4-5';
     // Anthropic api chat models list

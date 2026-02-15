@@ -2,39 +2,35 @@
 name = 'chatgpt-telegram-workers'
 workers_dev = true
 compatibility_date = "2024-11-11"
-compatibility_flags = ["nodejs_compat_v2"]
+compatibility_flags = [ "nodejs_compat_v2" ]
 
 # Deploy dist
-main = './dist/index.js'   # Default use of dist/index.js
+main = './dist/index.js' # Default use of dist/index.js
 
 # Deploy Core version
 # > pnpm run deploy:workers
-#main = './packages/apps/workers/src/index.ts'
-#or
-#main = './packages/apps/workers/dist/index.js'
+# main = './packages/apps/workers/src/index.ts'
+# or
+# main = './packages/apps/workers/dist/index.js'
 
 # Deploy Vercel AI version
 # > pnpm run deploy:workersnext
-#main = './packages/apps/workers-next/src/index.ts'
-#or
-#main = './packages/apps/workers-next/dist/index.js'
+# main = './packages/apps/workers-next/src/index.ts'
+# or
+# main = './packages/apps/workers-next/dist/index.js'
 
 # Deploy Telegram MarkdownV2 version
 # > pnpm run deploy:workersmk2
-#main = './packages/apps/workers-mk2/src/index.ts'
-#or
-#main = './packages/apps/workers-mk2/dist/index.js'
-
+# main = './packages/apps/workers-mk2/src/index.ts'
+# or
+# main = './packages/apps/workers-mk2/dist/index.js'
 
 # The id here is a required field
 # Please fill in your kv namespace id
 # preview_id is only used for debugging, please delete if not needed
 # If you want to know how to obtain the ID of kv_namespaces, please check here.
 # https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md
-kv_namespaces = [
-  { binding = 'DATABASE', id = '', preview_id = '' }
-]
-
+kv_namespaces = [ { binding = 'DATABASE', id = '', preview_id = '' } ]
 
 [vars]
 # More parameters usage, please see https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/CONFIG.md

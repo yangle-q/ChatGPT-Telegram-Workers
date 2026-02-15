@@ -2,7 +2,14 @@ import type { ChatAgent, ImageAgent } from '#/agent';
 import type { AgentUserConfig, WorkerContext } from '#/config';
 import type * as Telegram from 'telegram-bot-api-types';
 import type { CallbackQueryHandler } from './types';
-import { CHAT_AGENTS, IMAGE_AGENTS, loadChatLLM, loadImageGen } from '#/agent';
+import {
+    CHAT_AGENT_FACTORIES,
+    getChatAgentModelKey,
+    getImageAgentModelKey,
+    IMAGE_AGENT_FACTORIES,
+    loadChatLLM,
+    loadImageGen,
+} from '#/agent';
 import { ENV } from '#/config';
 import { TELEGRAM_AUTH_CHECKER } from '../auth';
 import { MessageSender } from '../sender';
@@ -23,13 +30,19 @@ export class AgentListCallbackQueryHandler implements CallbackQueryHandler {
 
     static Chat(): AgentListCallbackQueryHandler {
         return new AgentListCallbackQueryHandler('al:', 'ca:', () => {
-            return CHAT_AGENTS.filter(agent => agent.enable(ENV.USER_CONFIG)).map(agent => agent.name);
+            return CHAT_AGENT_FACTORIES
+                .map(factory => factory.create(ENV.USER_CONFIG))
+                .filter(agent => agent !== null)
+                .map(agent => agent.name);
         });
     }
 
     static Image(): AgentListCallbackQueryHandler {
         return new AgentListCallbackQueryHandler('ial:', 'ica:', () => {
-            return IMAGE_AGENTS.filter(agent => agent.enable(ENV.USER_CONFIG)).map(agent => agent.name);
+            return IMAGE_AGENT_FACTORIES
+                .map(factory => factory.create(ENV.USER_CONFIG))
+                .filter(agent => agent !== null)
+                .map(agent => agent.name);
         });
     }
 
@@ -92,7 +105,7 @@ function loadAgentContext<T = any>(
     prefix: string,
     agentLoader: AgentLoader,
     changeAgentType: ChangeAgentType,
-): { sender: MessageSender; params: T[]; agent: ChatAgent | ImageAgent; conf: AgentUserConfig } {
+): { sender: MessageSender; params: T[]; agent: ChatAgent | ImageAgent } {
     if (!query.message) {
         throw new Error('no message');
     }
@@ -104,10 +117,10 @@ function loadAgentContext<T = any>(
     }
     const conf: AgentUserConfig = changeAgentType(ENV.USER_CONFIG, agent);
     const theAgent = agentLoader(conf);
-    if (!theAgent?.modelKey) {
-        throw new Error(`modelKey not found: ${agent}`);
+    if (!theAgent) {
+        throw new Error(`agent not found: ${agent}`);
     }
-    return { sender, params, agent: theAgent, conf };
+    return { sender, params, agent: theAgent };
 }
 
 export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
@@ -138,9 +151,9 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
     }
 
     async handle(query: Telegram.CallbackQuery, data: string, context: WorkerContext): Promise<Response> {
-        const { sender, params, agent: theAgent, conf } = loadAgentContext(query, data, context, this.prefix, this.agentLoader, this.changeAgentType);
+        const { sender, params, agent: theAgent } = loadAgentContext(query, data, context, this.prefix, this.agentLoader, this.changeAgentType);
         const [agent, page] = params;
-        const models = await theAgent.modelList(conf);
+        const models = await theAgent.modelList();
         const message: Telegram.EditMessageTextParams = {
             chat_id: query.message?.chat.id || 0,
             message_id: query.message?.message_id || 0,
@@ -219,30 +232,42 @@ function changeImageAgentModel(agent: string, modelKey: string, model: string): 
 export class ModelChangeCallbackQueryHandler implements CallbackQueryHandler {
     prefix: string;
     agentLoader: AgentLoader;
+    modelKeyLoader: (agent: string) => string | null;
     changeAgentType: ChangeAgentType;
     createAgentChange: CreateAgentChange;
 
     needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
 
-    constructor(prefix: string, agentLoader: AgentLoader, changeAgentType: ChangeAgentType, createAgentChange: CreateAgentChange) {
+    constructor(
+        prefix: string,
+        agentLoader: AgentLoader,
+        modelKeyLoader: (agent: string) => string | null,
+        changeAgentType: ChangeAgentType,
+        createAgentChange: CreateAgentChange,
+    ) {
         this.prefix = prefix;
         this.agentLoader = agentLoader;
+        this.modelKeyLoader = modelKeyLoader;
         this.changeAgentType = changeAgentType;
         this.createAgentChange = createAgentChange;
     }
 
     static Chat(): ModelChangeCallbackQueryHandler {
-        return new ModelChangeCallbackQueryHandler('cm:', loadChatLLM, changeChatAgentType, changeChatAgentModel);
+        return new ModelChangeCallbackQueryHandler('cm:', loadChatLLM, getChatAgentModelKey, changeChatAgentType, changeChatAgentModel);
     }
 
     static Image(): ModelChangeCallbackQueryHandler {
-        return new ModelChangeCallbackQueryHandler('icm:', loadImageGen, changeImageAgentType, changeImageAgentModel);
+        return new ModelChangeCallbackQueryHandler('icm:', loadImageGen, getImageAgentModelKey, changeImageAgentType, changeImageAgentModel);
     }
 
     async handle(query: Telegram.CallbackQuery, data: string, context: WorkerContext): Promise<Response> {
-        const { sender, params, agent: theAgent } = loadAgentContext(query, data, context, this.prefix, this.agentLoader, this.changeAgentType);
+        const { sender, params } = loadAgentContext(query, data, context, this.prefix, this.agentLoader, this.changeAgentType);
         const [agent, model] = params;
-        await context.execChangeAndSave(this.createAgentChange(agent, theAgent.modelKey, model));
+        const modelKey = this.modelKeyLoader(agent);
+        if (!modelKey) {
+            throw new Error(`modelKey not found: ${agent}`);
+        }
+        await context.execChangeAndSave(this.createAgentChange(agent, modelKey, model));
         console.log('Change model:', agent, model);
         const message: Telegram.EditMessageTextParams = {
             chat_id: query.message?.chat.id || 0,

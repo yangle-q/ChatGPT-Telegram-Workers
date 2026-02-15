@@ -1,7 +1,7 @@
 import type { WorkerContext } from '#/config';
-import type { ChatAgent, HistoryItem, HistoryModifier, LLMChatParams, UserMessageItem } from './types';
+import type { ChatAgent, HistoryItem, HistoryModifier, LLMChatParams, UserMessageItem } from './core/types';
 import { ENV } from '#/config';
-import { extractTextContent } from './utils';
+import { extractTextContent } from './core/utils';
 
 function tokensCounter(): (text: string) => number {
     return (text) => {
@@ -119,7 +119,7 @@ export async function requestCompletionsFromLLM(params: UserMessageItem | null, 
         prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || undefined,
         messages: [...history, params],
     };
-    const { text, responses } = await agent.request(llmParams, context.USER_CONFIG, onStream);
+    const { text, responses } = await agent.request(llmParams, onStream);
     if (!historyDisable) {
         await saveHistory(historyKey, history, params, responses);
     }
