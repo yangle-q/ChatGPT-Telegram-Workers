@@ -44,6 +44,7 @@ export function isEventStreamResponse(resp: Response): boolean {
 
 export async function streamHandler<T>(stream: AsyncIterable<T>, contentExtractor: (data: T) => string | null, onStream?: (text: string) => Promise<any>): Promise<string> {
     let contentFull = '';
+    let pendingParts: string[] = [];
     let lengthDelta = 0;
     let updateStep = 50;
     let lastUpdateTime = Date.now();
@@ -54,7 +55,10 @@ export async function streamHandler<T>(stream: AsyncIterable<T>, contentExtracto
                 continue;
             }
             lengthDelta += textPart.length;
-            contentFull = contentFull + textPart;
+            pendingParts.push(textPart);
+            if (!onStream) {
+                continue;
+            }
             if (lengthDelta > updateStep) {
                 if (ENV.TELEGRAM_MIN_STREAM_INTERVAL > 0) {
                     const delta = Date.now() - lastUpdateTime;
@@ -63,12 +67,22 @@ export async function streamHandler<T>(stream: AsyncIterable<T>, contentExtracto
                     }
                     lastUpdateTime = Date.now();
                 }
+                if (pendingParts.length > 0) {
+                    contentFull += pendingParts.join('');
+                    pendingParts = [];
+                }
                 lengthDelta = 0;
                 updateStep += 20;
                 await onStream?.(`${contentFull}\n...`);
             }
         }
+        if (pendingParts.length > 0) {
+            contentFull += pendingParts.join('');
+        }
     } catch (e) {
+        if (pendingParts.length > 0) {
+            contentFull += pendingParts.join('');
+        }
         contentFull += `\nError: ${(e as Error).message}`;
     }
     return contentFull;
@@ -102,20 +116,22 @@ export async function requestChatCompletions(url: string, header: Record<string,
     const controller = new AbortController();
     const { signal } = controller;
 
-    let timeoutID = null;
+    let timeoutID: ReturnType<typeof setTimeout> | null = null;
     if (ENV.CHAT_COMPLETE_API_TIMEOUT > 0) {
         timeoutID = setTimeout(() => controller.abort(), ENV.CHAT_COMPLETE_API_TIMEOUT);
     }
 
-    const resp = await fetch(url, {
-        method: 'POST',
-        headers: header,
-        body: JSON.stringify(body),
-        signal,
-    });
-    if (timeoutID) {
-        clearTimeout(timeoutID);
+    try {
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: header,
+            body: JSON.stringify(body),
+            signal,
+        });
+        return await mapResponseToAnswer(resp, controller, options, onStream);
+    } finally {
+        if (timeoutID !== null) {
+            clearTimeout(timeoutID);
+        }
     }
-
-    return await mapResponseToAnswer(resp, controller, options, onStream);
 }

@@ -96,13 +96,12 @@ export class Anthropic implements ChatAgent {
     }
 
     readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
-        const { prompt, messages } = params;
+        const { prompt, messages: rawMessages } = params;
         const url = `${context.ANTHROPIC_API_BASE}/messages`;
         const header = anthropicHeader(context);
-
-        if (messages.length > 0 && messages[0].role === 'system') {
-            messages.shift();
-        }
+        const messages = rawMessages.length > 0 && rawMessages[0].role === 'system'
+            ? rawMessages.slice(1)
+            : rawMessages;
 
         const body = {
             ...(context.ANTHROPIC_CHAT_EXTRA_PARAMS || {}),

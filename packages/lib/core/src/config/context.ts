@@ -3,6 +3,13 @@ import type * as Telegram from 'telegram-bot-api-types';
 import { ENV, ENV_KEY_MAPPER } from './env';
 import { ConfigMerger } from './merger';
 
+function cloneAgentUserConfig(source: AgentUserConfig): AgentUserConfig {
+    if (typeof structuredClone === 'function') {
+        return structuredClone(source);
+    }
+    return JSON.parse(JSON.stringify(source));
+}
+
 export class ShareContext {
     botId: number;
     botToken: string;
@@ -90,7 +97,7 @@ export class WorkerContext {
     static async from(token: string, update: Telegram.Update): Promise<WorkerContext> {
         const context = new UpdateContext(update);
         const SHARE_CONTEXT = new ShareContext(token, context);
-        const USER_CONFIG = Object.assign({}, ENV.USER_CONFIG);
+        const USER_CONFIG = cloneAgentUserConfig(ENV.USER_CONFIG);
         try {
             const userConfig: AgentUserConfig = JSON.parse(await ENV.DATABASE.get(SHARE_CONTEXT.configStoreKey));
             ConfigMerger.merge(USER_CONFIG, ConfigMerger.trim(userConfig, ENV.LOCK_USER_CONFIG_KEYS) || {});
